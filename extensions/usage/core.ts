@@ -458,7 +458,7 @@ export async function fetchCodexUsage(token: string, config: RequestConfig = {})
     config,
   );
 
-  if (!result.ok) return { session: 0, weekly: 0, error: result.error };
+  if (!result.ok) return { session: 0, weekly: 0, error: (result as { ok: false; error: string }).error };
 
   const primary = result.data?.rate_limit?.primary_window;
   const secondary = result.data?.rate_limit?.secondary_window;
@@ -483,7 +483,7 @@ export async function fetchClaudeUsage(token: string, config: RequestConfig = {}
     config,
   );
 
-  if (!result.ok) return { session: 0, weekly: 0, error: result.error };
+  if (!result.ok) return { session: 0, weekly: 0, error: (result as { ok: false; error: string }).error };
 
   const data = result.data;
   const usage: UsageData = {
@@ -511,7 +511,7 @@ export async function fetchZaiUsage(token: string, config: FetchConfig = {}): Pr
     config,
   );
 
-  if (!result.ok) return { session: 0, weekly: 0, error: result.error };
+  if (!result.ok) return { session: 0, weekly: 0, error: (result as { ok: false; error: string }).error };
 
   const parsed = extractUsageFromPayload(result.data);
   if (!parsed) return { session: 0, weekly: 0, error: "unrecognized response shape" };
@@ -542,7 +542,7 @@ export async function fetchGoogleUsage(
     config,
   );
 
-  if (!result.ok) return { session: 0, weekly: 0, error: result.error };
+  if (!result.ok) return { session: 0, weekly: 0, error: (result as { ok: false; error: string }).error };
 
   const quota = parseGoogleQuotaBuckets(result.data, provider);
   if (quota) return quota;
