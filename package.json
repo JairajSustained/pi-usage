@@ -1,6 +1,6 @@
 {
   "name": "pi-usage",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "/usage command for pi – shows current provider's daily & weekly limits",
   "keywords": ["pi-package", "pi", "extension", "usage"],
   "license": "MIT",
@@ -12,6 +12,6 @@
     "@mariozechner/pi-tui": "*"
   },
   "pi": {
-    "extensions": ["./extensions/simple-usage/index.ts"]
+    "extensions": ["./extensions/usage/index.ts"]
   }
 }

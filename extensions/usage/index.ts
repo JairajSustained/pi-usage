@@ -3,30 +3,24 @@
  *
  * Provides a single /usage command that shows the current provider's
  * daily (session) and weekly limits in a TUI panel.
- *
- * Reuses the fetch & auth logic from pi-usage-bars/core.ts.
  */
 
-import { DynamicBorder, type ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import { AuthStorage, DynamicBorder, type ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { matchesKey, Container, Spacer, Text, type Focusable } from "@mariozechner/pi-tui";
 import {
-  canShowForProvider,
   clampPercent,
   colorForPercent,
   detectProvider,
-  ensureFreshAuthForProviders,
   fetchClaudeUsage,
   fetchCodexUsage,
   fetchGoogleUsage,
   fetchZaiUsage,
   providerToOAuthProviderId,
-  readAuth,
   resolveUsageEndpoints,
-  type AuthData,
   type ProviderKey,
   type UsageData,
   type UsageEndpoints,
-} from "../../../pi-usage-bars/extensions/usage-bars/core";
+} from "./core.js";
 
 // ── Provider labels ──────────────────────────────────────────────
 
@@ -205,53 +199,51 @@ function renderBar(theme: any, value: number, width = 20): string {
   return theme.fg(colorForPercent(v), full) + theme.fg("dim", empty);
 }
 
+async function getAccessToken(providerId: string): Promise<string | null> {
+  try {
+    const auth = AuthStorage.create();
+    return (await auth.getApiKey(providerId)) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchProviderUsage(
   provider: ProviderKey,
-  auth: AuthData | null,
   endpoints: UsageEndpoints,
 ): Promise<UsageData | null> {
   const oauthId = providerToOAuthProviderId(provider);
-  if (oauthId && auth) {
-    const refreshed = await ensureFreshAuthForProviders([oauthId], { auth });
-    if (refreshed.refreshErrors[oauthId]) {
-      return {
-        session: 0,
-        weekly: 0,
-        error: `auth refresh failed (${refreshed.refreshErrors[oauthId]})`,
-      };
-    }
-    auth = refreshed.auth ?? auth;
-  }
 
   switch (provider) {
     case "codex": {
-      const access = auth?.["openai-codex"]?.access;
+      const access = oauthId ? await getAccessToken(oauthId) : null;
       return access
         ? fetchCodexUsage(access)
         : { session: 0, weekly: 0, error: "missing access token (try /login again)" };
     }
     case "claude": {
-      const access = auth?.anthropic?.access;
+      const access = oauthId ? await getAccessToken(oauthId) : null;
       return access
         ? fetchClaudeUsage(access)
         : { session: 0, weekly: 0, error: "missing access token (try /login again)" };
     }
     case "zai": {
-      const token = auth?.zai?.access || auth?.zai?.key || process.env.ZAI_API_KEY;
+      const token = process.env.ZAI_API_KEY || (oauthId ? await getAccessToken(oauthId) : null);
       return token
         ? fetchZaiUsage(token, { endpoints })
         : { session: 0, weekly: 0, error: "missing token (set ZAI_API_KEY or try /login again)" };
     }
     case "gemini": {
-      const creds = auth?.["google-gemini-cli"];
-      return creds?.access
-        ? fetchGoogleUsage(creds.access, endpoints.gemini, creds.projectId, "gemini", { endpoints })
+      const access = oauthId ? await getAccessToken(oauthId) : null;
+      // AuthStorage manages projectId internally via auth.json
+      return access
+        ? fetchGoogleUsage(access, endpoints.gemini, undefined, "gemini", { endpoints })
         : { session: 0, weekly: 0, error: "missing access token (try /login again)" };
     }
     case "antigravity": {
-      const creds = auth?.["google-antigravity"];
-      return creds?.access
-        ? fetchGoogleUsage(creds.access, endpoints.antigravity, creds.projectId, "antigravity", { endpoints })
+      const access = oauthId ? await getAccessToken(oauthId) : null;
+      return access
+        ? fetchGoogleUsage(access, endpoints.antigravity, undefined, "antigravity", { endpoints })
         : { session: 0, weekly: 0, error: "missing access token (try /login again)" };
     }
     default:
@@ -278,15 +270,16 @@ export default function (pi: ExtensionAPI) {
         return;
       }
 
-      const auth = readAuth();
+      const auth = AuthStorage.create();
+      const oauthId = providerToOAuthProviderId(provider);
 
-      // Z.AI uses ZAI_API_KEY env var, not OAuth — auth.json won't have it
-      if (provider === "zai" && !auth?.zai?.access && !auth?.zai?.key && !process.env.ZAI_API_KEY) {
+      // Z.AI uses ZAI_API_KEY env var, not OAuth
+      if (provider === "zai" && !process.env.ZAI_API_KEY && !(oauthId && auth.hasAuth(oauthId))) {
         ctx.ui.notify("No ZAI_API_KEY found (set env var or run /login)", "warning");
         return;
       }
 
-      if (provider !== "zai" && !canShowForProvider(provider, auth, endpoints)) {
+      if (provider !== "zai" && oauthId && !auth.hasAuth(oauthId)) {
         ctx.ui.notify(
           `No credentials found for ${PROVIDER_LABELS[provider] ?? provider}`,
           "warning",
@@ -295,7 +288,7 @@ export default function (pi: ExtensionAPI) {
       }
 
       await ctx.ui.custom<void>((tui, theme, _keybindings, done) => {
-        const fetchPromise = fetchProviderUsage(provider, auth, endpoints);
+        const fetchPromise = fetchProviderUsage(provider, endpoints);
         return new UsagePanelComponent(tui, theme, provider, fetchPromise, () => done());
       });
     },

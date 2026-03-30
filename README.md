@@ -1,30 +1,11 @@
-# pi-usage-simple
+# pi-usage
 
 A lightweight pi extension that provides a single `/usage` command to display the **current provider's** daily and weekly usage limits.
 
-## Features
-
-- 🔍 Auto-detects the active provider (Codex, Claude, Z.AI, Gemini, Antigravity)
-- 📊 Shows daily (session) and weekly usage as color-coded progress bars
-- ⏱ Displays time until limits reset
-- 🪶 No background polling, no status bar — only fetches when you run `/usage`
-
 ## Install
 
-Add to your `~/.pi/agent/settings.json`:
-
-```json
-{
-  "packages": ["git:github.com:<user>/pi-usage-simple"]
-}
 ```
-
-Or link locally:
-
-```json
-{
-  "extensions": ["/path/to/pi-usage-simple/extensions/simple-usage/index.ts"]
-}
+pi install npm:pi-usage
 ```
 
 ## Usage
@@ -37,10 +18,6 @@ In pi, type:
 
 A panel appears showing the current provider's daily and weekly limits with progress bars. Press Enter or Escape to close.
 
-## Dependencies
-
-This extension reuses the fetch and auth logic from [pi-usage-bars](../pi-usage-bars)
-
 ## Supported Providers
 
 | Provider | Auth Method |
@@ -50,6 +27,10 @@ This extension reuses the fetch and auth logic from [pi-usage-bars](../pi-usage-
 | Z.AI | API key |
 | Gemini CLI | OAuth (`/login`) |
 | Antigravity (Google) | OAuth (`/login`) |
+
+## Credits
+
+The usage fetching, auth handling, and provider detection logic are adapted from [pi-usage-bars](https://github.com/ajarellanod/pi-usage-bars) by [@ajarellanod](https://github.com/ajarellanod). Many thanks for the excellent work that made this lightweight version possible.
 
 ## License
 
