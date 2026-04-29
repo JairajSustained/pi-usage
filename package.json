@@ -5,6 +5,9 @@
   "keywords": ["pi-package", "pi", "extension", "usage"],
   "license": "MIT",
   "type": "module",
+  "scripts": {
+    "test": "bun test"
+  },
   "files": ["extensions", "README.md", "LICENSE"],
   "peerDependencies": {
     "@mariozechner/pi-ai": "*",
