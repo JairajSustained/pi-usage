@@ -1,20 +1,39 @@
 {
   "name": "pi-usage",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "/usage command for pi – shows current provider's daily & weekly limits",
-  "keywords": ["pi-package", "pi", "extension", "usage"],
+  "keywords": [
+    "pi-package",
+    "pi",
+    "extension",
+    "usage"
+  ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iefnaf/pi-usage.git"
+  },
+  "bugs": {
+    "url": "https://github.com/iefnaf/pi-usage/issues"
+  },
+  "homepage": "https://github.com/iefnaf/pi-usage#readme",
   "type": "module",
   "scripts": {
     "test": "bun test"
   },
-  "files": ["extensions", "README.md", "LICENSE"],
+  "files": [
+    "extensions",
+    "README.md",
+    "LICENSE"
+  ],
   "peerDependencies": {
     "@mariozechner/pi-ai": "*",
     "@mariozechner/pi-coding-agent": "*",
     "@mariozechner/pi-tui": "*"
   },
   "pi": {
-    "extensions": ["./extensions/usage/index.ts"]
+    "extensions": [
+      "./extensions/usage/index.ts"
+    ]
   }
 }
